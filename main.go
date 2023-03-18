@@ -11,7 +11,10 @@ import (
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
 	"go.uber.org/multierr"
+	"go.uber.org/zap"
 )
+
+var logger *zap.Logger
 
 type readWriteCloser struct {
 	readCloser  io.ReadCloser
@@ -30,19 +33,24 @@ func (r *readWriteCloser) Close() error {
 	return multierr.Append(r.readCloser.Close(), r.writeCloser.Close())
 }
 
-func main() {
+func initLog() {
 	user, err := user.Current()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	logPath := filepath.Join(user.HomeDir, ".thrift-lsp.log")
-	file, err := os.Create(logPath)
+	logConfig := zap.NewDevelopmentConfig()
+	logConfig.OutputPaths = []string{logPath}
+	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	logger, err = logConfig.Build()
 	if err != nil {
 		log.Fatal(err)
 	}
+}
 
-	log.SetOutput(file)
+func main() {
+	initLog()
 
 	log.Println("start")
 	conn := jsonrpc2.NewConn(
@@ -54,7 +62,7 @@ func main() {
 		),
 	)
 
-	ctx := context.Background()
+	ctx := protocol.WithLogger(context.Background(), logger)
 	conn.Go(ctx, protocol.ServerHandler(&Server{}, nil))
 	<-ctx.Done()
 

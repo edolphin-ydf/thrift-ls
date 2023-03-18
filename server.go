@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"go.lsp.dev/protocol"
@@ -18,34 +17,33 @@ func (se *Server) Initialize(ctx context.Context, params *protocol.InitializePar
 		Capabilities: protocol.ServerCapabilities{
 			DefinitionProvider: true,
 			TextDocumentSync: &protocol.TextDocumentSyncOptions{
-				OpenClose:         true,
-				Change:            protocol.TextDocumentSyncKindFull,
-				WillSave:          false,
-				WillSaveWaitUntil: false,
-				Save:              &protocol.SaveOptions{
-					IncludeText: false,
-				},
+				OpenClose: true,
+				Change:    protocol.TextDocumentSyncKindFull,
+			},
+			CompletionProvider: &protocol.CompletionOptions{
+				ResolveProvider:   true,
+				TriggerCharacters: []string{"."},
 			},
 		},
 		ServerInfo: &protocol.ServerInfo{
-			Name:    "bufls",
+			Name:    "thrift-lsp",
 			Version: "0.0.1",
 		},
 	}, nil
 }
 
 func (se *Server) Initialized(ctx context.Context, params *protocol.InitializedParams) (err error) {
-	log.Println("Initialized")
+	logger.Sugar().Debug("Initialized")
 	return nil
 }
 
 func (se *Server) Shutdown(ctx context.Context) (err error) {
-	log.Println("Shutdown")
+	logger.Sugar().Debug("Shutdown")
 	return nil
 }
 
 func (se *Server) Exit(ctx context.Context) (err error) {
-	log.Println("Exit")
+	logger.Sugar().Debug("Exit")
 	os.Exit(0)
 	return nil
 }
@@ -79,6 +77,8 @@ func (se *Server) ColorPresentation(ctx context.Context, params *protocol.ColorP
 }
 
 func (se *Server) Completion(ctx context.Context, params *protocol.CompletionParams) (result *protocol.CompletionList, err error) {
+	logger.Sugar().Debug("Completion")
+	//logger.Sugar().Debug("CompletionContext", params)
 	return nil, nil
 }
 
@@ -87,17 +87,23 @@ func (se *Server) CompletionResolve(ctx context.Context, params *protocol.Comple
 }
 
 func (se *Server) Declaration(ctx context.Context, params *protocol.DeclarationParams) (result []protocol.Location, err error) {
-	log.Println("Declaration", params.TextDocument.URI, params.Position)
+	logger.Sugar().Debug("Declaration", params.TextDocument.URI, params.Position)
 	return nil, nil
 }
 
 func (se *Server) Definition(ctx context.Context, params *protocol.DefinitionParams) (result []protocol.Location, err error) {
-	log.Println("Definition", params.TextDocument.URI, params.Position)
+	logger.Sugar().Debug("Definition", params.TextDocument.URI, params.Position)
 	return definition(params.TextDocument.URI, params.Position), nil
 }
 
 func (se *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) (err error) {
-	log.Println("DidChange", params.TextDocument.URI)
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Sugar().DPanic("DidChange", r)
+		}
+	}()
+
+	logger.Sugar().Debug("DidChange", params.TextDocument.URI)
 	if len(params.ContentChanges) == 0 {
 		return nil
 	}
@@ -114,7 +120,7 @@ func (se *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextD
 	files[0].Version = params.TextDocument.Version
 
 	for _, f := range files {
-		log.Println("DidChange", f.URI, f.Version)
+		logger.Sugar().Debug("DidChange", f.URI, f.Version)
 		WorkspaceInstance.Files[f.URI] = f
 	}
 
@@ -134,12 +140,12 @@ func (se *Server) DidChangeWorkspaceFolders(ctx context.Context, params *protoco
 }
 
 func (se *Server) DidClose(ctx context.Context, params *protocol.DidCloseTextDocumentParams) (err error) {
-	log.Println("DidClose", params.TextDocument.URI)
+	logger.Sugar().Debug("DidClose", params.TextDocument.URI)
 	return nil
 }
 
 func (se *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) (err error) {
-	log.Println("DidOpen", params.TextDocument.URI)
+	logger.Sugar().Debug("DidOpen", params.TextDocument.URI)
 
 	files := ParseFile(params.TextDocument.URI, params.TextDocument.Text)
 	if len(files) == 0 {
@@ -148,14 +154,14 @@ func (se *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocum
 	files[0].Version = params.TextDocument.Version
 
 	for _, f := range files {
-		log.Println("DidOpen", f.URI, f.Version)
+		logger.Sugar().Debug("DidOpen", f.URI, f.Version)
 		WorkspaceInstance.Files[f.URI] = f
 	}
 	return nil
 }
 
 func (se *Server) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) (err error) {
-	log.Println("DidSave", params.TextDocument.URI)
+	logger.Sugar().Debug("DidSave", params.TextDocument.URI)
 	return nil
 }
 
@@ -176,7 +182,7 @@ func (se *Server) DocumentLinkResolve(ctx context.Context, params *protocol.Docu
 }
 
 func (se *Server) DocumentSymbol(ctx context.Context, params *protocol.DocumentSymbolParams) (result []interface{}, err error) {
-	log.Println("DocumentSymbol", params.TextDocument.URI)
+	logger.Sugar().Debug("DocumentSymbol", params.TextDocument.URI)
 	return nil, nil
 }
 
@@ -229,7 +235,7 @@ func (se *Server) Symbols(ctx context.Context, params *protocol.WorkspaceSymbolP
 }
 
 func (se *Server) TypeDefinition(ctx context.Context, params *protocol.TypeDefinitionParams) (result []protocol.Location, err error) {
-	log.Println("TypeDefinition", params.TextDocument.URI, params.Position)
+	logger.Sugar().Debug("TypeDefinition", params.TextDocument.URI, params.Position)
 	return definition(params.TextDocument.URI, params.Position), nil
 }
 
@@ -312,5 +318,3 @@ func (se *Server) Moniker(ctx context.Context, params *protocol.MonikerParams) (
 func (se *Server) Request(ctx context.Context, method string, params interface{}) (result interface{}, err error) {
 	return nil, nil
 }
-
-

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"strings"
 
 	"go.lsp.dev/protocol"
@@ -15,7 +14,7 @@ func definition(currentFileURI protocol.DocumentURI, position protocol.Position)
 	}
 
 	typeIdentifier := findTypeIdentifierAtPosition(file, position)
-	log.Println("typeIdentifier", typeIdentifier)
+	logger.Sugar().Debug("typeIdentifier", typeIdentifier)
 
 	if typeIdentifier == "" {
 		return nil
@@ -39,7 +38,7 @@ func findTypeIdentifierAtPosition(file *File, position protocol.Position) string
 func findDefinitionForType(file *File, typeIdentifier string) []protocol.Location {
 	var packageName string
 	packageName, typeIdentifier = splitTypeIdentifier(typeIdentifier)
-	log.Println("packageName", packageName, "typeIdentifier", typeIdentifier)
+	logger.Sugar().Debug("packageName", packageName, "typeIdentifier", typeIdentifier)
 
 	if packageName == "" {
 		// 找当前文件
@@ -90,7 +89,7 @@ func findDefinitionForType(file *File, typeIdentifier string) []protocol.Locatio
 
 func splitTypeIdentifier(typeIdentifier string) (packageName string, typeName string) {
 	lastIndexOfDot := strings.LastIndex(typeIdentifier, ".")
-	log.Println("typeIdentifier", typeIdentifier, "lastIndexOfDot", lastIndexOfDot)
+	logger.Sugar().Debug("typeIdentifier", typeIdentifier, "lastIndexOfDot", lastIndexOfDot)
 
 	if lastIndexOfDot == -1 {
 		return "", typeIdentifier

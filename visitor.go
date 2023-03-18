@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -44,9 +43,14 @@ func (s *FileVisitor) EnterStruct_(ctx *parser.Struct_Context) {
 		Struct_Context: ctx,
 		Name: Name{
 			TerminalNode: ctx.IDENTIFIER(),
-			Name:         ctx.IDENTIFIER().GetText(),
 		},
 	}
+
+	identifier := ctx.IDENTIFIER()
+	if identifier != nil {
+		s.currentStruct.Name.Name = ctx.IDENTIFIER().GetText()
+	}
+
 	s.File.Structs = append(s.File.Structs, s.currentStruct)
 }
 
@@ -61,9 +65,14 @@ func (s *FileVisitor) EnterField(ctx *parser.FieldContext) {
 		FieldContext: ctx,
 		Name: Name{
 			TerminalNode: ctx.IDENTIFIER(),
-			Name:         ctx.IDENTIFIER().GetText(),
 		},
 	}
+
+	identifier := ctx.IDENTIFIER()
+	if identifier != nil {
+		s.currentField.Name.Name = ctx.IDENTIFIER().GetText()
+	}
+
 	s.currentStruct.Fields = append(s.currentStruct.Fields, s.currentField)
 }
 
@@ -118,6 +127,12 @@ func (s *FileVisitor) EnterEnum_rule(ctx *parser.Enum_ruleContext) {
 			Name:         ctx.IDENTIFIER().GetText(),
 		},
 	}
+
+	identifier := ctx.IDENTIFIER()
+	if identifier != nil {
+		s.currentEnum.Name.Name = ctx.IDENTIFIER().GetText()
+	}
+
 	s.File.Enums = append(s.File.Enums, s.currentEnum)
 }
 
@@ -132,20 +147,29 @@ func (s *FileVisitor) EnterEnum_field(ctx *parser.Enum_fieldContext) {
 		return
 	}
 
-	value, _ := strconv.ParseInt(ctx.Integer().INTEGER().GetText(), 10, 64)
+	var (
+		name  string
+		value int64
+	)
+	if ctx.Integer() != nil && ctx.Integer().INTEGER() != nil {
+		value, _ = strconv.ParseInt(ctx.Integer().INTEGER().GetText(), 10, 64)
+	}
+	if ctx.IDENTIFIER() != nil {
+		name = ctx.IDENTIFIER().GetText()
+	}
+
 	s.currentEnum.Fields = append(s.currentEnum.Fields, &EnumField{
 		Enum_fieldContext: ctx,
-		Name:              Name{
+		Name: Name{
 			TerminalNode: ctx.IDENTIFIER(),
-			Name:         ctx.IDENTIFIER().GetText(),
+			Name:         name,
 		},
-		Value:             int(value),
+		Value: int(value),
 	})
 }
 
 // ExitEnum_field is called when production enum_field is exited.
 func (s *FileVisitor) ExitEnum_field(ctx *parser.Enum_fieldContext) {}
-
 
 func ParseFileByStream(uri protocol.DocumentURI, input antlr.CharStream) (res []*File) {
 	lexer := parser.NewThriftLexer(input)
@@ -173,7 +197,7 @@ func ParseFile(uri protocol.DocumentURI, text string) (res []*File) {
 func ParseFileByFileName(fileName string) (res []*File) {
 	input, err := antlr.NewFileStream(fileName)
 	if err != nil {
-		log.Println("ParseFileByPath open stream fail:", err)
+		logger.Sugar().Debug("ParseFileByPath open stream fail:", err)
 		return
 	}
 
@@ -195,5 +219,5 @@ func IncludeToFullPath(currentURI protocol.DocumentURI, include string) string {
 	currentFile := currentURI.Filename()
 	currentDir := filepath.Dir(currentFile)
 
-	return filepath.Clean(currentDir+ "/" + include)
+	return filepath.Clean(currentDir + "/" + include)
 }
