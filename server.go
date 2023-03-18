@@ -77,9 +77,27 @@ func (se *Server) ColorPresentation(ctx context.Context, params *protocol.ColorP
 }
 
 func (se *Server) Completion(ctx context.Context, params *protocol.CompletionParams) (result *protocol.CompletionList, err error) {
-	logger.Sugar().Debug("Completion")
-	//logger.Sugar().Debug("CompletionContext", params)
-	return nil, nil
+	
+	se.checkAndParseFile(ctx, WorkspaceInstance.Files[params.TextDocument.URI])
+
+	//logger.Sugar().Debug("CompletionContext", params.Context)
+	file, ok := WorkspaceInstance.Files[params.TextDocument.URI]
+	if !ok {
+		return nil, nil
+	}
+
+	findResult := FindNodeByPosition(file, params.Position)
+	if findResult != nil {
+		logger.Sugar().Debug("CompletionFieldType", findResult.GetText())
+	} else {
+		logger.Sugar().Debug("CompletionFieldType", "nil")
+		return nil, nil
+	}
+
+	return &protocol.CompletionList{
+		IsIncomplete: false,
+		Items:        completion(file, findResult.GetText()),
+	}, nil
 }
 
 func (se *Server) CompletionResolve(ctx context.Context, params *protocol.CompletionItem) (result *protocol.CompletionItem, err error) {
@@ -93,7 +111,27 @@ func (se *Server) Declaration(ctx context.Context, params *protocol.DeclarationP
 
 func (se *Server) Definition(ctx context.Context, params *protocol.DefinitionParams) (result []protocol.Location, err error) {
 	logger.Sugar().Debug("Definition", params.TextDocument.URI, params.Position)
+
+	se.checkAndParseFile(ctx, WorkspaceInstance.Files[params.TextDocument.URI])
+
 	return definition(params.TextDocument.URI, params.Position), nil
+}
+
+func (se *Server) checkAndParseFile(ctx context.Context, file *File) {
+	if file.DocumentVersion >= file.TextVersion {
+		return
+	}
+
+	files := ParseFile(file.URI, file.Text)
+	if len(files) == 0 {
+		return
+	}
+	files[0].DocumentVersion = file.TextVersion
+
+	for _, f := range files {
+		WorkspaceInstance.Files[f.URI] = f
+		f.DocumentVersion = file.TextVersion
+	}
 }
 
 func (se *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) (err error) {
@@ -103,26 +141,17 @@ func (se *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextD
 		}
 	}()
 
-	logger.Sugar().Debug("DidChange", params.TextDocument.URI)
 	if len(params.ContentChanges) == 0 {
 		return nil
 	}
 
 	file, ok := WorkspaceInstance.Files[params.TextDocument.URI]
-	if ok && file.Version >= params.TextDocument.Version {
+	if ok && file.TextVersion >= params.TextDocument.Version {
 		return nil
 	}
 
-	files := ParseFile(params.TextDocument.URI, params.ContentChanges[0].Text)
-	if len(files) == 0 {
-		return nil
-	}
-	files[0].Version = params.TextDocument.Version
-
-	for _, f := range files {
-		logger.Sugar().Debug("DidChange", f.URI, f.Version)
-		WorkspaceInstance.Files[f.URI] = f
-	}
+	file.Text = params.ContentChanges[0].Text
+	file.TextVersion = params.TextDocument.Version
 
 	return nil
 }
@@ -145,16 +174,20 @@ func (se *Server) DidClose(ctx context.Context, params *protocol.DidCloseTextDoc
 }
 
 func (se *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) (err error) {
-	logger.Sugar().Debug("DidOpen", params.TextDocument.URI)
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Sugar().DPanic("DidOpen", r)
+		}
+	}()
 
 	files := ParseFile(params.TextDocument.URI, params.TextDocument.Text)
 	if len(files) == 0 {
 		return nil
 	}
-	files[0].Version = params.TextDocument.Version
+	files[0].DocumentVersion = params.TextDocument.Version
 
 	for _, f := range files {
-		logger.Sugar().Debug("DidOpen", f.URI, f.Version)
+		f.DocumentVersion = params.TextDocument.Version
 		WorkspaceInstance.Files[f.URI] = f
 	}
 	return nil

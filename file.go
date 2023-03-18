@@ -44,9 +44,13 @@ type Enum struct {
 }
 
 type File struct {
-	URI      protocol.DocumentURI
-	Includes []string
-	Structs  []*Struct
-	Enums    []*Enum
-	Version  int32
+	URI             protocol.DocumentURI
+	Document        parser.IDocumentContext
+	Includes        []string
+	Structs         []*Struct
+	Enums           []*Enum
+	DocumentVersion int32
+
+	Text        string
+	TextVersion int32
 }

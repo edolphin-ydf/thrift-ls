@@ -14,7 +14,7 @@ func definition(currentFileURI protocol.DocumentURI, position protocol.Position)
 	}
 
 	typeIdentifier := findTypeIdentifierAtPosition(file, position)
-	logger.Sugar().Debug("typeIdentifier", typeIdentifier)
+	logger.Sugar().Debug("typeIdentifier:", typeIdentifier)
 
 	if typeIdentifier == "" {
 		return nil
@@ -26,8 +26,12 @@ func definition(currentFileURI protocol.DocumentURI, position protocol.Position)
 func findTypeIdentifierAtPosition(file *File, position protocol.Position) string {
 	for _, s := range file.Structs {
 		for _, f := range s.Fields {
-			if f.GetStart().GetLine()-1 <= int(position.Line) && f.GetStop().GetLine()-1 >= int(position.Line) &&
-				f.GetStart().GetColumn()-1 <= int(position.Character) && f.GetStop().GetColumn()-1 >= int(position.Character) {
+			logger.Sugar().Debug(f.Field_type().GetText())
+			fieldType := f.Field_type()
+			if fieldType == nil {
+				continue
+			}
+			if PositionInText(fieldType.GetStart(), fieldType.GetText(), position) {
 				return f.Type
 			}
 		}
@@ -38,7 +42,7 @@ func findTypeIdentifierAtPosition(file *File, position protocol.Position) string
 func findDefinitionForType(file *File, typeIdentifier string) []protocol.Location {
 	var packageName string
 	packageName, typeIdentifier = splitTypeIdentifier(typeIdentifier)
-	logger.Sugar().Debug("packageName", packageName, "typeIdentifier", typeIdentifier)
+	logger.Sugar().Debug("packageName:", packageName, " typeIdentifier", typeIdentifier)
 
 	if packageName == "" {
 		// 找当前文件
@@ -51,8 +55,8 @@ func findDefinitionForType(file *File, typeIdentifier string) []protocol.Locatio
 				}}
 			}
 		}
-		
-		for _, e := range file.Enums{
+
+		for _, e := range file.Enums {
 			if e.Name.Name == typeIdentifier {
 				symbol := e.Name.GetSymbol()
 				return []protocol.Location{{
@@ -89,7 +93,7 @@ func findDefinitionForType(file *File, typeIdentifier string) []protocol.Locatio
 
 func splitTypeIdentifier(typeIdentifier string) (packageName string, typeName string) {
 	lastIndexOfDot := strings.LastIndex(typeIdentifier, ".")
-	logger.Sugar().Debug("typeIdentifier", typeIdentifier, "lastIndexOfDot", lastIndexOfDot)
+	logger.Sugar().Debug("typeIdentifier:", typeIdentifier, " lastIndexOfDot:", lastIndexOfDot)
 
 	if lastIndexOfDot == -1 {
 		return "", typeIdentifier

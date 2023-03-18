@@ -1,4 +1,4 @@
-include "b.thrift"
+include "B.c.d.thrift"
 
 struct BaseResp {
     1: string StatusMessage,
@@ -8,6 +8,6 @@ struct BaseResp {
 
 struct BaseResp2 {
     1: BaseResp StatusMessage,
-    2: b.BaseResp1 StatusCode ,
-    3: optional map<string,string> Extra 
+    2: B.c.d.BaseResp1 StatusCode ,
+	2: B.c.d.BaseResp1 
 }

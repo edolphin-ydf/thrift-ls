@@ -61,6 +61,10 @@ func (s *FileVisitor) ExitStruct_(ctx *parser.Struct_Context) {
 
 // EnterField is called when production field is entered.
 func (s *FileVisitor) EnterField(ctx *parser.FieldContext) {
+	if s.currentStruct == nil {
+		return
+	}
+
 	s.currentField = &Field{
 		FieldContext: ctx,
 		Name: Name{
@@ -180,10 +184,12 @@ func ParseFileByStream(uri protocol.DocumentURI, input antlr.CharStream) (res []
 	tree := p.Document()
 
 	visitor := &FileVisitor{}
-	antlr.ParseTreeWalkerDefault.Walk(visitor, tree)
 	visitor.File.URI = uri
-	res = append(res, &visitor.File)
+	visitor.File.Document = tree
 
+	antlr.ParseTreeWalkerDefault.Walk(visitor, tree)
+
+	res = append(res, &visitor.File)
 	res = append(res, ParseFileByIncludes(uri, visitor.File.Includes)...)
 
 	return
@@ -195,13 +201,25 @@ func ParseFile(uri protocol.DocumentURI, text string) (res []*File) {
 }
 
 func ParseFileByFileName(fileName string) (res []*File) {
-	input, err := antlr.NewFileStream(fileName)
-	if err != nil {
-		logger.Sugar().Debug("ParseFileByPath open stream fail:", err)
-		return
+	uri := uri.File(fileName)
+	file, ok := WorkspaceInstance.Files[uri]
+
+	var input antlr.CharStream
+	if ok {
+		if file.DocumentVersion >= file.TextVersion {
+			return nil
+		}
+
+		input = antlr.NewInputStream(file.Text)
+	} else {
+		var err error
+		input, err = antlr.NewFileStream(fileName)
+		if err != nil {
+			logger.Sugar().Debug("ParseFileByPath open stream fail:", err)
+			return
+		}
 	}
 
-	uri := uri.File(fileName)
 	return ParseFileByStream(uri, input)
 }
 
@@ -221,3 +239,32 @@ func IncludeToFullPath(currentURI protocol.DocumentURI, include string) string {
 
 	return filepath.Clean(currentDir + "/" + include)
 }
+
+//region find node==============================================================
+type NodeFindVisitor struct {
+	parser.BaseThriftListener
+
+	position protocol.Position
+
+	FieldTypeCtx *parser.Field_typeContext
+}
+
+// EnterField_type is called when production field_type is entered.
+func (s *NodeFindVisitor) EnterField_type(ctx *parser.Field_typeContext) {
+	//logger.Sugar().Debugf("EnterField_type: %v", ctx.GetText())
+	if PositionInOrAfterText(ctx.GetStart(), ctx.GetText(), s.position) {
+		s.FieldTypeCtx = ctx
+	}
+}
+
+func FindNodeByPosition(file *File, position protocol.Position) *parser.Field_typeContext {
+	visitor := &NodeFindVisitor{
+		position: position,
+	}
+
+	antlr.ParseTreeWalkerDefault.Walk(visitor, file.Document)
+
+	return visitor.FieldTypeCtx
+}
+
+//endregion find node==============================================================
