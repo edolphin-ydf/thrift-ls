@@ -22,6 +22,10 @@ type FileVisitor struct {
 
 	// enum
 	currentEnum *Enum
+
+	// service
+	currentService *Service
+	currentFunc    *Function
 }
 
 func (s *FileVisitor) VisitTerminal(node antlr.TerminalNode) {
@@ -36,6 +40,71 @@ func (s *FileVisitor) EnterInclude_(ctx *parser.Include_Context) {
 
 // ExitInclude_ is called when production include_ is exited.
 func (s *FileVisitor) ExitInclude_(ctx *parser.Include_Context) {}
+
+// EnterService is called when production service is entered.
+func (s *FileVisitor) EnterService(ctx *parser.ServiceContext) {
+	s.currentService = &Service{
+		ServiceContext: ctx,
+		Name: Name{
+			TerminalNode: ctx.IDENTIFIER(0),
+		},
+	}
+
+	identifier := ctx.IDENTIFIER(0)
+	if identifier != nil {
+		s.currentService.Name.Name = ctx.IDENTIFIER(0).GetText()
+	}
+
+	s.File.Services = append(s.File.Services, s.currentService)
+}
+
+// ExitService is called when production service is exited.
+func (s *FileVisitor) ExitService(ctx *parser.ServiceContext) {
+	s.currentService = nil
+}
+
+// EnterFunction_ is called when production function_ is entered.
+func (s *FileVisitor) EnterFunction_(ctx *parser.Function_Context) {
+	if s.currentService == nil {
+		return
+	}
+
+	s.currentFunc = &Function{
+		Function_Context: ctx,
+		Name: Name{
+			TerminalNode: ctx.IDENTIFIER(),
+		},
+	}
+
+	identifier := ctx.IDENTIFIER()
+	if identifier != nil {
+		s.currentFunc.Name.Name = ctx.IDENTIFIER().GetText()
+	}
+
+	s.currentService.Funcs = append(s.currentService.Funcs, s.currentFunc)
+}
+
+// ExitFunction_ is called when production function_ is exited.
+func (s *FileVisitor) ExitFunction_(ctx *parser.Function_Context) {
+	s.currentFunc = nil
+}
+
+// EnterFunction_type is called when production function_type is entered.
+func (s *FileVisitor) EnterFunction_type(ctx *parser.Function_typeContext) {
+	if s.currentFunc == nil {
+		return
+	}
+
+	if ctx.Field_type() != nil && ctx.Field_type().IDENTIFIER() != nil {
+		s.currentFunc.FuncType = ctx.Field_type().IDENTIFIER().GetText()
+	} else {
+		s.currentFunc.FuncType = ctx.GetText()
+	}
+}
+
+// ExitFunction_type is called when production function_type is exited.
+func (s *FileVisitor) ExitFunction_type(ctx *parser.Function_typeContext) {
+}
 
 // EnterStruct_ is called when production struct_ is entered.
 func (s *FileVisitor) EnterStruct_(ctx *parser.Struct_Context) {
@@ -61,10 +130,6 @@ func (s *FileVisitor) ExitStruct_(ctx *parser.Struct_Context) {
 
 // EnterField is called when production field is entered.
 func (s *FileVisitor) EnterField(ctx *parser.FieldContext) {
-	if s.currentStruct == nil {
-		return
-	}
-
 	s.currentField = &Field{
 		FieldContext: ctx,
 		Name: Name{
@@ -77,7 +142,11 @@ func (s *FileVisitor) EnterField(ctx *parser.FieldContext) {
 		s.currentField.Name.Name = ctx.IDENTIFIER().GetText()
 	}
 
-	s.currentStruct.Fields = append(s.currentStruct.Fields, s.currentField)
+	if s.currentStruct != nil {
+		s.currentStruct.Fields = append(s.currentStruct.Fields, s.currentField)
+	} else if s.currentFunc != nil {
+		s.currentFunc.Params = append(s.currentFunc.Params, s.currentField)
+	}
 }
 
 // ExitField is called when production field is exited.

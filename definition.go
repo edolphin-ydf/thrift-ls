@@ -14,9 +14,8 @@ func definition(currentFileURI protocol.DocumentURI, position protocol.Position)
 	}
 
 	typeIdentifier := findTypeIdentifierAtPosition(file, position)
-	logger.Sugar().Debug("typeIdentifier:", typeIdentifier)
 
-	if typeIdentifier == "" {
+	if typeIdentifier == "" || typeIdentifier == "void" {
 		return nil
 	}
 
@@ -26,7 +25,6 @@ func definition(currentFileURI protocol.DocumentURI, position protocol.Position)
 func findTypeIdentifierAtPosition(file *File, position protocol.Position) string {
 	for _, s := range file.Structs {
 		for _, f := range s.Fields {
-			logger.Sugar().Debug(f.Field_type().GetText())
 			fieldType := f.Field_type()
 			if fieldType == nil {
 				continue
@@ -36,13 +34,36 @@ func findTypeIdentifierAtPosition(file *File, position protocol.Position) string
 			}
 		}
 	}
+
+	for _, s := range file.Services {
+		for _, f := range s.Funcs {
+			funcType := f.Function_type()
+			if funcType == nil {
+				continue
+			}
+			if PositionInText(funcType.GetStart(), f.FuncType, position) {
+				return f.FuncType
+			}
+
+			for _, p := range f.Params {
+				fieldType := p.Field_type()
+				if fieldType == nil {
+					continue
+				}
+
+				if PositionInText(fieldType.GetStart(), p.Type, position) {
+					return p.Type
+				}
+			}
+		}
+	}
+
 	return ""
 }
 
 func findDefinitionForType(file *File, typeIdentifier string) []protocol.Location {
 	var packageName string
 	packageName, typeIdentifier = splitTypeIdentifier(typeIdentifier)
-	logger.Sugar().Debug("packageName:", packageName, " typeIdentifier", typeIdentifier)
 
 	if packageName == "" {
 		// 找当前文件
@@ -93,7 +114,6 @@ func findDefinitionForType(file *File, typeIdentifier string) []protocol.Locatio
 
 func splitTypeIdentifier(typeIdentifier string) (packageName string, typeName string) {
 	lastIndexOfDot := strings.LastIndex(typeIdentifier, ".")
-	logger.Sugar().Debug("typeIdentifier:", typeIdentifier, " lastIndexOfDot:", lastIndexOfDot)
 
 	if lastIndexOfDot == -1 {
 		return "", typeIdentifier

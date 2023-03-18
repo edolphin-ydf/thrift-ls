@@ -11,3 +11,7 @@ struct BaseResp2 {
     2: B.c.d.BaseResp1 StatusCode ,
 	2: B.c.d.BaseResp1 
 }
+
+service TestService {
+	void TestFunc(1: B.c.d.BaseResp1 req)
+}
