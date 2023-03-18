@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
+	"path/filepath"
 
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
@@ -29,7 +31,13 @@ func (r *readWriteCloser) Close() error {
 }
 
 func main() {
-	file, err := os.Create("/Users/bytedance/thriftlsp.log")
+	user, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	logPath := filepath.Join(user.HomeDir, ".thrift-lsp.log")
+	file, err := os.Create(logPath)
 	if err != nil {
 		log.Fatal(err)
 	}
