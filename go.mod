@@ -1,4 +1,4 @@
-module github.com/edolphin-ydf/thrift-lsp
+module github.com/edolphin-ydf/thrift-ls
 
 go 1.18
 

@@ -26,7 +26,7 @@ func (se *Server) Initialize(ctx context.Context, params *protocol.InitializePar
 			},
 		},
 		ServerInfo: &protocol.ServerInfo{
-			Name:    "thrift-lsp",
+			Name:    "thrift-ls",
 			Version: "0.0.1",
 		},
 	}, nil

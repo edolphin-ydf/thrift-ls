@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
-	parser "github.com/edolphin-ydf/thrift-lsp/antlr/gen"
+	parser "github.com/edolphin-ydf/thrift-ls/antlr/gen"
 )
 
 func TestVisitor(t *testing.T) {

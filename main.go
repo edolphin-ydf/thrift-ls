@@ -39,7 +39,7 @@ func initLog() {
 		log.Fatal(err)
 	}
 
-	logPath := filepath.Join(user.HomeDir, ".thrift-lsp.log")
+	logPath := filepath.Join(user.HomeDir, ".thrift-ls.log")
 	logConfig := zap.NewDevelopmentConfig()
 	logConfig.OutputPaths = []string{logPath}
 	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
