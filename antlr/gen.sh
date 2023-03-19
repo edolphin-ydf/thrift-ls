@@ -1,3 +1,3 @@
 alias antlr4='java -Xmx500M -cp "./antlr-4.12.0-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
-antlr4 -Dlanguage=Go -o gen *.g4
+antlr4 -Dlanguage=Go -visitor -o gen *.g4
 

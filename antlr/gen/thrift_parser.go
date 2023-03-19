@@ -531,6 +531,16 @@ func (s *DocumentContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *DocumentContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitDocument(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Document() (localctx IDocumentContext) {
 	this := p
 	_ = this
@@ -703,6 +713,16 @@ func (s *HeaderContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *HeaderContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitHeader(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Header() (localctx IHeaderContext) {
 	this := p
 	_ = this
@@ -820,6 +840,16 @@ func (s *Include_Context) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Include_Context) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitInclude_(s)
+	}
+}
+
+func (s *Include_Context) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitInclude_(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -948,6 +978,16 @@ func (s *Namespace_Context) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Namespace_Context) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitNamespace_(s)
+	}
+}
+
+func (s *Namespace_Context) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitNamespace_(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1122,6 +1162,16 @@ func (s *Cpp_includeContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Cpp_includeContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitCpp_include(s)
+	}
+}
+
+func (s *Cpp_includeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitCpp_include(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1357,6 +1407,16 @@ func (s *DefinitionContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *DefinitionContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitDefinition(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Definition() (localctx IDefinitionContext) {
 	this := p
 	_ = this
@@ -1563,6 +1623,16 @@ func (s *Const_ruleContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Const_ruleContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitConst_rule(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Const_rule() (localctx IConst_ruleContext) {
 	this := p
 	_ = this
@@ -1726,6 +1796,16 @@ func (s *Typedef_Context) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Typedef_Context) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitTypedef_(s)
+	}
+}
+
+func (s *Typedef_Context) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitTypedef_(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -1903,6 +1983,16 @@ func (s *Enum_ruleContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Enum_ruleContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitEnum_rule(s)
+	}
+}
+
+func (s *Enum_ruleContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitEnum_rule(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -2089,6 +2179,16 @@ func (s *Enum_fieldContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Enum_fieldContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitEnum_field(s)
+	}
+}
+
+func (s *Enum_fieldContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitEnum_field(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -2294,6 +2394,16 @@ func (s *SenumContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *SenumContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitSenum(s)
+	}
+}
+
+func (s *SenumContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitSenum(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -2503,6 +2613,16 @@ func (s *Struct_Context) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Struct_Context) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitStruct_(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Struct_() (localctx IStruct_Context) {
 	this := p
 	_ = this
@@ -2698,6 +2818,16 @@ func (s *Union_Context) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Union_Context) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitUnion_(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Union_() (localctx IUnion_Context) {
 	this := p
 	_ = this
@@ -2890,6 +3020,16 @@ func (s *ExceptionContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ExceptionContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitException(s)
+	}
+}
+
+func (s *ExceptionContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitException(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -3090,6 +3230,16 @@ func (s *ServiceContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *ServiceContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitService(s)
+	}
+}
+
+func (s *ServiceContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitService(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -3345,6 +3495,16 @@ func (s *FieldContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *FieldContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitField(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Field() (localctx IFieldContext) {
 	this := p
 	_ = this
@@ -3518,6 +3678,16 @@ func (s *Field_idContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Field_idContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitField_id(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Field_id() (localctx IField_idContext) {
 	this := p
 	_ = this
@@ -3607,6 +3777,16 @@ func (s *Field_reqContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Field_reqContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitField_req(s)
+	}
+}
+
+func (s *Field_reqContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitField_req(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -3843,6 +4023,16 @@ func (s *Function_Context) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Function_Context) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitFunction_(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Function_() (localctx IFunction_Context) {
 	this := p
 	_ = this
@@ -4002,6 +4192,16 @@ func (s *OnewayContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *OnewayContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitOneway(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Oneway() (localctx IOnewayContext) {
 	this := p
 	_ = this
@@ -4116,6 +4316,16 @@ func (s *Function_typeContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Function_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitFunction_type(s)
+	}
+}
+
+func (s *Function_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitFunction_type(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -4267,6 +4477,16 @@ func (s *Throws_listContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Throws_listContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitThrows_list(s)
+	}
+}
+
+func (s *Throws_listContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitThrows_list(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -4428,6 +4648,16 @@ func (s *Type_annotationsContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Type_annotationsContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitType_annotations(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Type_annotations() (localctx IType_annotationsContext) {
 	this := p
 	_ = this
@@ -4578,6 +4808,16 @@ func (s *Type_annotationContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Type_annotationContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitType_annotation(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Type_annotation() (localctx IType_annotationContext) {
 	this := p
 	_ = this
@@ -4716,6 +4956,16 @@ func (s *Annotation_valueContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Annotation_valueContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitAnnotation_value(s)
+	}
+}
+
+func (s *Annotation_valueContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitAnnotation_value(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -4866,6 +5116,16 @@ func (s *Field_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Field_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitField_type(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Field_type() (localctx IField_typeContext) {
 	this := p
 	_ = this
@@ -5012,6 +5272,16 @@ func (s *Base_typeContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Base_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitBase_type(s)
+	}
+}
+
+func (s *Base_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitBase_type(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -5184,6 +5454,16 @@ func (s *Container_typeContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Container_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitContainer_type(s)
+	}
+}
+
+func (s *Container_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitContainer_type(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -5377,6 +5657,16 @@ func (s *Map_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Map_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitMap_type(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Map_type() (localctx IMap_typeContext) {
 	this := p
 	_ = this
@@ -5535,6 +5825,16 @@ func (s *Set_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Set_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitSet_type(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Set_type() (localctx ISet_typeContext) {
 	this := p
 	_ = this
@@ -5685,6 +5985,16 @@ func (s *List_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *List_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitList_type(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) List_type() (localctx IList_typeContext) {
 	this := p
 	_ = this
@@ -5803,6 +6113,16 @@ func (s *Cpp_typeContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Cpp_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitCpp_type(s)
+	}
+}
+
+func (s *Cpp_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitCpp_type(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -5968,6 +6288,16 @@ func (s *Const_valueContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Const_valueContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitConst_value(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Const_value() (localctx IConst_valueContext) {
 	this := p
 	_ = this
@@ -6111,6 +6441,16 @@ func (s *IntegerContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *IntegerContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitInteger(s)
+	}
+}
+
+func (s *IntegerContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitInteger(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -6300,6 +6640,16 @@ func (s *Const_listContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Const_listContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitConst_list(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Const_list() (localctx IConst_listContext) {
 	this := p
 	_ = this
@@ -6482,6 +6832,16 @@ func (s *Const_map_entryContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Const_map_entryContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitConst_map_entry(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Const_map_entry() (localctx IConst_map_entryContext) {
 	this := p
 	_ = this
@@ -6637,6 +6997,16 @@ func (s *Const_mapContext) ExitRule(listener antlr.ParseTreeListener) {
 	}
 }
 
+func (s *Const_mapContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitConst_map(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
 func (p *ThriftParser) Const_map() (localctx IConst_mapContext) {
 	this := p
 	_ = this
@@ -6750,6 +7120,16 @@ func (s *List_separatorContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *List_separatorContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitList_separator(s)
+	}
+}
+
+func (s *List_separatorContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitList_separator(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 
@@ -6890,6 +7270,16 @@ func (s *Real_base_typeContext) EnterRule(listener antlr.ParseTreeListener) {
 func (s *Real_base_typeContext) ExitRule(listener antlr.ParseTreeListener) {
 	if listenerT, ok := listener.(ThriftListener); ok {
 		listenerT.ExitReal_base_type(s)
+	}
+}
+
+func (s *Real_base_typeContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case ThriftVisitor:
+		return t.VisitReal_base_type(s)
+
+	default:
+		return t.VisitChildren(s)
 	}
 }
 

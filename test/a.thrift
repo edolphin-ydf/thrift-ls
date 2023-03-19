@@ -9,7 +9,7 @@ struct BaseResp {
 struct BaseResp2 {
     1: BaseResp StatusMessage,
     2: B.c.d.BaseResp1 StatusCode ,
-	2: B.c.d.BaseResp1 
+	2: B.c.d.BaseResp1 xxx
 }
 
 service TestService {

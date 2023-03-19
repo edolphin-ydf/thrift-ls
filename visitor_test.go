@@ -13,9 +13,10 @@ import (
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 	parser "github.com/edolphin-ydf/thrift-ls/antlr/gen"
+	"go.uber.org/zap"
 )
 
-func TestVisitor(t *testing.T) {
+func TestListener(t *testing.T) {
 	input, _ := antlr.NewFileStream("./test/a.thrift")
 	lexer := parser.NewThriftLexer(input)
 	stream := antlr.NewCommonTokenStream(lexer, 0)
@@ -24,9 +25,28 @@ func TestVisitor(t *testing.T) {
 	p.BuildParseTrees = true
 	tree := p.Document()
 
-	visitor := &FileVisitor{}
+	visitor := &FileListener{}
 	antlr.ParseTreeWalkerDefault.Walk(visitor, tree)
 
 	d, _ := json.MarshalIndent(visitor.File, "", "\t")
 	t.Log(string(d))
+}
+
+func TestVisitor(t *testing.T) {
+	c := zap.NewDevelopmentConfig()
+	c.OutputPaths = []string{"stdout"}
+	logger, _ = c.Build()
+	input, _ := antlr.NewFileStream("./test/a.thrift")
+	lexer := parser.NewThriftLexer(input)
+	stream := antlr.NewCommonTokenStream(lexer, 0)
+	p := parser.NewThriftParser(stream)
+	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
+	p.BuildParseTrees = true
+	tree := p.Document()
+
+	visitor := &NodeFindVisitor{
+		BaseThriftVisitor: &parser.BaseThriftVisitor{
+		},
+	}
+	visitor.Visit(tree)
 }

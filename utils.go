@@ -42,3 +42,9 @@ func PositionInOrAfterText(start antlr.Token, text string, position protocol.Pos
 	return start.GetLine()-1 == int(position.Line) &&
 		start.GetColumn() <= int(position.Character) && start.GetColumn()+len(text) >= int(position.Character)
 }
+
+func LogBaseParserRuleContext(ctx *antlr.BaseParserRuleContext) {
+	start := ctx.GetStart()
+	stop := ctx.GetStop()
+	logger.Sugar().Debug(start.GetLine(), ",", start.GetColumn(), "|", stop.GetLine(), ",", stop.GetColumn())
+}

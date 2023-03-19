@@ -11,7 +11,7 @@ import (
 	"go.lsp.dev/uri"
 )
 
-type FileVisitor struct {
+type FileListener struct {
 	parser.BaseThriftListener
 
 	File File
@@ -28,21 +28,21 @@ type FileVisitor struct {
 	currentFunc    *Function
 }
 
-func (s *FileVisitor) VisitTerminal(node antlr.TerminalNode) {
+func (s *FileListener) VisitTerminal(node antlr.TerminalNode) {
 	//log.Println(node.GetText())
 }
 
 // EnterInclude_ is called when production include_ is entered.
-func (s *FileVisitor) EnterInclude_(ctx *parser.Include_Context) {
+func (s *FileListener) EnterInclude_(ctx *parser.Include_Context) {
 	include := strings.Trim(ctx.LITERAL().GetText(), "\"'")
 	s.File.Includes = append(s.File.Includes, include)
 }
 
 // ExitInclude_ is called when production include_ is exited.
-func (s *FileVisitor) ExitInclude_(ctx *parser.Include_Context) {}
+func (s *FileListener) ExitInclude_(ctx *parser.Include_Context) {}
 
 // EnterService is called when production service is entered.
-func (s *FileVisitor) EnterService(ctx *parser.ServiceContext) {
+func (s *FileListener) EnterService(ctx *parser.ServiceContext) {
 	s.currentService = &Service{
 		ServiceContext: ctx,
 		Name: Name{
@@ -59,12 +59,12 @@ func (s *FileVisitor) EnterService(ctx *parser.ServiceContext) {
 }
 
 // ExitService is called when production service is exited.
-func (s *FileVisitor) ExitService(ctx *parser.ServiceContext) {
+func (s *FileListener) ExitService(ctx *parser.ServiceContext) {
 	s.currentService = nil
 }
 
 // EnterFunction_ is called when production function_ is entered.
-func (s *FileVisitor) EnterFunction_(ctx *parser.Function_Context) {
+func (s *FileListener) EnterFunction_(ctx *parser.Function_Context) {
 	if s.currentService == nil {
 		return
 	}
@@ -85,12 +85,12 @@ func (s *FileVisitor) EnterFunction_(ctx *parser.Function_Context) {
 }
 
 // ExitFunction_ is called when production function_ is exited.
-func (s *FileVisitor) ExitFunction_(ctx *parser.Function_Context) {
+func (s *FileListener) ExitFunction_(ctx *parser.Function_Context) {
 	s.currentFunc = nil
 }
 
 // EnterFunction_type is called when production function_type is entered.
-func (s *FileVisitor) EnterFunction_type(ctx *parser.Function_typeContext) {
+func (s *FileListener) EnterFunction_type(ctx *parser.Function_typeContext) {
 	if s.currentFunc == nil {
 		return
 	}
@@ -103,11 +103,11 @@ func (s *FileVisitor) EnterFunction_type(ctx *parser.Function_typeContext) {
 }
 
 // ExitFunction_type is called when production function_type is exited.
-func (s *FileVisitor) ExitFunction_type(ctx *parser.Function_typeContext) {
+func (s *FileListener) ExitFunction_type(ctx *parser.Function_typeContext) {
 }
 
 // EnterStruct_ is called when production struct_ is entered.
-func (s *FileVisitor) EnterStruct_(ctx *parser.Struct_Context) {
+func (s *FileListener) EnterStruct_(ctx *parser.Struct_Context) {
 	s.currentStruct = &Struct{
 		Struct_Context: ctx,
 		Name: Name{
@@ -124,12 +124,12 @@ func (s *FileVisitor) EnterStruct_(ctx *parser.Struct_Context) {
 }
 
 // ExitStruct_ is called when production struct_ is exited.
-func (s *FileVisitor) ExitStruct_(ctx *parser.Struct_Context) {
+func (s *FileListener) ExitStruct_(ctx *parser.Struct_Context) {
 	s.currentStruct = nil
 }
 
 // EnterField is called when production field is entered.
-func (s *FileVisitor) EnterField(ctx *parser.FieldContext) {
+func (s *FileListener) EnterField(ctx *parser.FieldContext) {
 	s.currentField = &Field{
 		FieldContext: ctx,
 		Name: Name{
@@ -150,12 +150,12 @@ func (s *FileVisitor) EnterField(ctx *parser.FieldContext) {
 }
 
 // ExitField is called when production field is exited.
-func (s *FileVisitor) ExitField(ctx *parser.FieldContext) {
+func (s *FileListener) ExitField(ctx *parser.FieldContext) {
 	s.currentField = nil
 }
 
 // EnterField_id is called when production field_id is entered.
-func (s *FileVisitor) EnterField_id(ctx *parser.Field_idContext) {
+func (s *FileListener) EnterField_id(ctx *parser.Field_idContext) {
 	if s.currentField == nil {
 		return
 	}
@@ -165,10 +165,10 @@ func (s *FileVisitor) EnterField_id(ctx *parser.Field_idContext) {
 }
 
 // ExitField_id is called when production field_id is exited.
-func (s *FileVisitor) ExitField_id(ctx *parser.Field_idContext) {}
+func (s *FileListener) ExitField_id(ctx *parser.Field_idContext) {}
 
 // EnterField_req is called when production field_req is entered.
-func (s *FileVisitor) EnterField_req(ctx *parser.Field_reqContext) {
+func (s *FileListener) EnterField_req(ctx *parser.Field_reqContext) {
 	if s.currentField == nil {
 		return
 	}
@@ -177,10 +177,10 @@ func (s *FileVisitor) EnterField_req(ctx *parser.Field_reqContext) {
 }
 
 // ExitField_req is called when production field_req is exited.
-func (s *FileVisitor) ExitField_req(ctx *parser.Field_reqContext) {}
+func (s *FileListener) ExitField_req(ctx *parser.Field_reqContext) {}
 
 // EnterField_type is called when production field_type is entered.
-func (s *FileVisitor) EnterField_type(ctx *parser.Field_typeContext) {
+func (s *FileListener) EnterField_type(ctx *parser.Field_typeContext) {
 	if s.currentField == nil {
 		return
 	}
@@ -189,10 +189,10 @@ func (s *FileVisitor) EnterField_type(ctx *parser.Field_typeContext) {
 }
 
 // ExitField_type is called when production field_type is exited.
-func (s *FileVisitor) ExitField_type(ctx *parser.Field_typeContext) {}
+func (s *FileListener) ExitField_type(ctx *parser.Field_typeContext) {}
 
 // EnterEnum_rule is called when production enum_rule is entered.
-func (s *FileVisitor) EnterEnum_rule(ctx *parser.Enum_ruleContext) {
+func (s *FileListener) EnterEnum_rule(ctx *parser.Enum_ruleContext) {
 	s.currentEnum = &Enum{
 		Enum_ruleContext: ctx,
 		Name: Name{
@@ -210,12 +210,12 @@ func (s *FileVisitor) EnterEnum_rule(ctx *parser.Enum_ruleContext) {
 }
 
 // ExitEnum_rule is called when production enum_rule is exited.
-func (s *FileVisitor) ExitEnum_rule(ctx *parser.Enum_ruleContext) {
+func (s *FileListener) ExitEnum_rule(ctx *parser.Enum_ruleContext) {
 	s.currentEnum = nil
 }
 
 // EnterEnum_field is called when production enum_field is entered.
-func (s *FileVisitor) EnterEnum_field(ctx *parser.Enum_fieldContext) {
+func (s *FileListener) EnterEnum_field(ctx *parser.Enum_fieldContext) {
 	if s.currentEnum == nil {
 		return
 	}
@@ -242,7 +242,7 @@ func (s *FileVisitor) EnterEnum_field(ctx *parser.Enum_fieldContext) {
 }
 
 // ExitEnum_field is called when production enum_field is exited.
-func (s *FileVisitor) ExitEnum_field(ctx *parser.Enum_fieldContext) {}
+func (s *FileListener) ExitEnum_field(ctx *parser.Enum_fieldContext) {}
 
 func ParseFileByStream(uri protocol.DocumentURI, input antlr.CharStream) (res []*File) {
 	lexer := parser.NewThriftLexer(input)
@@ -252,7 +252,7 @@ func ParseFileByStream(uri protocol.DocumentURI, input antlr.CharStream) (res []
 	p.BuildParseTrees = true
 	tree := p.Document()
 
-	visitor := &FileVisitor{}
+	visitor := &FileListener{}
 	visitor.File.URI = uri
 	visitor.File.Document = tree
 
@@ -310,7 +310,7 @@ func IncludeToFullPath(currentURI protocol.DocumentURI, include string) string {
 }
 
 //region find node==============================================================
-type NodeFindVisitor struct {
+type NodeFindListener struct {
 	parser.BaseThriftListener
 
 	position protocol.Position
@@ -319,7 +319,7 @@ type NodeFindVisitor struct {
 }
 
 // EnterField_type is called when production field_type is entered.
-func (s *NodeFindVisitor) EnterField_type(ctx *parser.Field_typeContext) {
+func (s *NodeFindListener) EnterField_type(ctx *parser.Field_typeContext) {
 	//logger.Sugar().Debugf("EnterField_type: %v", ctx.GetText())
 	if PositionInOrAfterText(ctx.GetStart(), ctx.GetText(), s.position) {
 		s.FieldTypeCtx = ctx
@@ -327,7 +327,7 @@ func (s *NodeFindVisitor) EnterField_type(ctx *parser.Field_typeContext) {
 }
 
 func FindNodeByPosition(file *File, position protocol.Position) *parser.Field_typeContext {
-	visitor := &NodeFindVisitor{
+	visitor := &NodeFindListener{
 		position: position,
 	}
 
@@ -337,3 +337,176 @@ func FindNodeByPosition(file *File, position protocol.Position) *parser.Field_ty
 }
 
 //endregion find node==============================================================
+
+//region find node by visitor mode==============================================================
+type NodeFindVisitor struct {
+	*parser.BaseThriftVisitor
+
+	position protocol.Position
+
+	FieldTypeCtx *parser.Field_typeContext
+}
+
+func (v *NodeFindVisitor) Visit(tree antlr.ParseTree) interface{} { return tree.Accept(v) }
+
+func (v *NodeFindVisitor) VisitDocument(ctx *parser.DocumentContext) interface{} {
+	for _, ic := range ctx.AllDefinition() {
+		v.Visit(ic)
+	}
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitHeader(ctx *parser.HeaderContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitInclude_(ctx *parser.Include_Context) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitNamespace_(ctx *parser.Namespace_Context) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitCpp_include(ctx *parser.Cpp_includeContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitDefinition(ctx *parser.DefinitionContext) interface{} {
+	LogBaseParserRuleContext(ctx.BaseParserRuleContext)
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitConst_rule(ctx *parser.Const_ruleContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitTypedef_(ctx *parser.Typedef_Context) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitEnum_rule(ctx *parser.Enum_ruleContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitEnum_field(ctx *parser.Enum_fieldContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitSenum(ctx *parser.SenumContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitStruct_(ctx *parser.Struct_Context) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitUnion_(ctx *parser.Union_Context) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitException(ctx *parser.ExceptionContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitService(ctx *parser.ServiceContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitField(ctx *parser.FieldContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitField_id(ctx *parser.Field_idContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitField_req(ctx *parser.Field_reqContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitFunction_(ctx *parser.Function_Context) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitOneway(ctx *parser.OnewayContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitFunction_type(ctx *parser.Function_typeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitThrows_list(ctx *parser.Throws_listContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitType_annotations(ctx *parser.Type_annotationsContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitType_annotation(ctx *parser.Type_annotationContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitAnnotation_value(ctx *parser.Annotation_valueContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitField_type(ctx *parser.Field_typeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitBase_type(ctx *parser.Base_typeContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitContainer_type(ctx *parser.Container_typeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitMap_type(ctx *parser.Map_typeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitSet_type(ctx *parser.Set_typeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitList_type(ctx *parser.List_typeContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *NodeFindVisitor) VisitCpp_type(ctx *parser.Cpp_typeContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitConst_value(ctx *parser.Const_valueContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitInteger(ctx *parser.IntegerContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitConst_list(ctx *parser.Const_listContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitConst_map_entry(ctx *parser.Const_map_entryContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitConst_map(ctx *parser.Const_mapContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitList_separator(ctx *parser.List_separatorContext) interface{} {
+	return nil
+}
+
+func (v *NodeFindVisitor) VisitReal_base_type(ctx *parser.Real_base_typeContext) interface{} {
+	return nil
+}
+
+//endregion find node by visitor mode==============================================================
