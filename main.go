@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
+	"flag"
 	"io"
 	"log"
 	"os"
-	"os/user"
-	"path/filepath"
 
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/protocol"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var logger *zap.Logger
@@ -33,16 +33,21 @@ func (r *readWriteCloser) Close() error {
 	return multierr.Append(r.readCloser.Close(), r.writeCloser.Close())
 }
 
-func initLog() {
-	user, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
+var (
+	logFile   = flag.String("logfile", "", "log file")
+	logLevel = flag.Int("loglevel", int(zap.DebugLevel), "log level")
+)
 
-	logPath := filepath.Join(user.HomeDir, ".thrift-ls.log")
+func initLog() {
+	if *logFile == "" {
+		// set logger to zap no op logger
+		logger = zap.NewNop()
+		return
+	}
+	var err error
 	logConfig := zap.NewDevelopmentConfig()
-	logConfig.OutputPaths = []string{logPath}
-	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	logConfig.OutputPaths = []string{*logFile}
+	logConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(*logLevel))
 	logger, err = logConfig.Build()
 	if err != nil {
 		log.Fatal(err)
@@ -50,6 +55,8 @@ func initLog() {
 }
 
 func main() {
+	flag.Parse()
+
 	initLog()
 
 	log.Println("start")
