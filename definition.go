@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 
+	parser "github.com/edolphin-ydf/thrift-ls/antlr/gen"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -13,7 +14,7 @@ func definition(currentFileURI protocol.DocumentURI, position protocol.Position)
 		return nil
 	}
 
-	typeIdentifier := findTypeIdentifierAtPosition(file, position)
+	typeIdentifier := findTypeIdentifierAtPosition(file, position, false)
 
 	if typeIdentifier == "" || typeIdentifier == "void" {
 		return nil
@@ -22,43 +23,19 @@ func definition(currentFileURI protocol.DocumentURI, position protocol.Position)
 	return findDefinitionForType(file, typeIdentifier)
 }
 
-func findTypeIdentifierAtPosition(file *File, position protocol.Position) string {
-	for _, s := range file.Structs {
-		for _, f := range s.Fields {
-			fieldType := f.Field_type()
-			if fieldType == nil {
-				continue
-			}
-			if PositionInText(fieldType.GetStart(), fieldType.GetText(), position) {
-				return f.Type
-			}
-		}
+func findTypeIdentifierAtPosition(file *File, position protocol.Position, includeNextPos bool) string {
+	visitor := &FieldTypeFindVisitor{
+		BaseThriftVisitor: &parser.BaseThriftVisitor{},
+		position:          position,
+		includeNextPos:    includeNextPos,
+	}
+	visitor.Visit(file.Document)
+
+	if visitor.FieldTypeCtx == nil {
+		return ""
 	}
 
-	for _, s := range file.Services {
-		for _, f := range s.Funcs {
-			funcType := f.Function_type()
-			if funcType == nil {
-				continue
-			}
-			if PositionInText(funcType.GetStart(), f.FuncType, position) {
-				return f.FuncType
-			}
-
-			for _, p := range f.Params {
-				fieldType := p.Field_type()
-				if fieldType == nil {
-					continue
-				}
-
-				if PositionInText(fieldType.GetStart(), p.Type, position) {
-					return p.Type
-				}
-			}
-		}
-	}
-
-	return ""
+	return visitor.FieldTypeCtx.GetText()
 }
 
 func findDefinitionForType(file *File, typeIdentifier string) []protocol.Location {

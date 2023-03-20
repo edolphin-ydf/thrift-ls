@@ -309,203 +309,248 @@ func IncludeToFullPath(currentURI protocol.DocumentURI, include string) string {
 	return filepath.Clean(currentDir + "/" + include)
 }
 
-//region find node==============================================================
-type NodeFindListener struct {
-	parser.BaseThriftListener
-
-	position protocol.Position
-
-	FieldTypeCtx *parser.Field_typeContext
-}
-
-// EnterField_type is called when production field_type is entered.
-func (s *NodeFindListener) EnterField_type(ctx *parser.Field_typeContext) {
-	//logger.Sugar().Debugf("EnterField_type: %v", ctx.GetText())
-	if PositionInOrAfterText(ctx.GetStart(), ctx.GetText(), s.position) {
-		s.FieldTypeCtx = ctx
-	}
-}
-
-func FindNodeByPosition(file *File, position protocol.Position) *parser.Field_typeContext {
-	visitor := &NodeFindListener{
-		position: position,
-	}
-
-	antlr.ParseTreeWalkerDefault.Walk(visitor, file.Document)
-
-	return visitor.FieldTypeCtx
-}
-
-//endregion find node==============================================================
-
 //region find node by visitor mode==============================================================
-type NodeFindVisitor struct {
+type FieldTypeFindVisitor struct {
 	*parser.BaseThriftVisitor
 
-	position protocol.Position
+	position       protocol.Position
+	includeNextPos bool
 
 	FieldTypeCtx *parser.Field_typeContext
 }
 
-func (v *NodeFindVisitor) Visit(tree antlr.ParseTree) interface{} { return tree.Accept(v) }
+func (v *FieldTypeFindVisitor) Visit(tree antlr.ParseTree) interface{} {
+	if tree == nil {
+		return false
+	}
 
-func (v *NodeFindVisitor) VisitDocument(ctx *parser.DocumentContext) interface{} {
+	if parserRuleCtx, ok := tree.(antlr.ParserRuleContext); ok {
+		// 1. ctx的开始和结束位置可能完全相同，此时结束位置加上GetText()的长度
+		// 2. 先用上述方式计算出来的range，判断position是否在range内
+		// 3. 如果不在，则直接用ctx的Start加上GetText()长度，判断position是否在range内
+		r := GetNodeRange(parserRuleCtx)
+		inRange := PositionInRange(r, v.position) ||
+			v.includeNextPos && PositionInOrAfterText(parserRuleCtx.GetStart(), parserRuleCtx.GetText(), v.position)
+
+		if inRange {
+			logger.Sugar().Debug(parserRuleCtx.GetRuleIndex(), " ", parserRuleCtx.GetText())
+
+			tree.Accept(v)
+
+			return true
+		}
+	}
+	return false
+}
+
+func (v *FieldTypeFindVisitor) VisitDocument(ctx *parser.DocumentContext) interface{} {
 	for _, ic := range ctx.AllDefinition() {
-		v.Visit(ic)
+		if v.Visit(ic).(bool) {
+			return nil
+		}
 	}
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitHeader(ctx *parser.HeaderContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitHeader(ctx *parser.HeaderContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitInclude_(ctx *parser.Include_Context) interface{} {
+func (v *FieldTypeFindVisitor) VisitInclude_(ctx *parser.Include_Context) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitNamespace_(ctx *parser.Namespace_Context) interface{} {
+func (v *FieldTypeFindVisitor) VisitNamespace_(ctx *parser.Namespace_Context) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitCpp_include(ctx *parser.Cpp_includeContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitCpp_include(ctx *parser.Cpp_includeContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitDefinition(ctx *parser.DefinitionContext) interface{} {
-	LogBaseParserRuleContext(ctx.BaseParserRuleContext)
-	return v.VisitChildren(ctx)
-}
+func (v *FieldTypeFindVisitor) VisitDefinition(ctx *parser.DefinitionContext) interface{} {
+	if v.Visit(ctx.Const_rule()).(bool) {
+		return nil
+	}
 
-func (v *NodeFindVisitor) VisitConst_rule(ctx *parser.Const_ruleContext) interface{} {
+	if v.Visit(ctx.Typedef_()).(bool) {
+		return nil
+	}
+
+	if v.Visit(ctx.Struct_()).(bool) {
+		return nil
+	}
+
+	if v.Visit(ctx.Union_()).(bool) {
+		return nil
+	}
+
+	if v.Visit(ctx.Service()).(bool) {
+		return nil
+	}
+
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitTypedef_(ctx *parser.Typedef_Context) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitEnum_rule(ctx *parser.Enum_ruleContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitConst_rule(ctx *parser.Const_ruleContext) interface{} {
+	v.Visit(ctx.Field_type())
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitEnum_field(ctx *parser.Enum_fieldContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitTypedef_(ctx *parser.Typedef_Context) interface{} {
+	v.Visit(ctx.Field_type())
+
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitSenum(ctx *parser.SenumContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitStruct_(ctx *parser.Struct_Context) interface{} {
+	for _, field := range ctx.AllField() {
+		if v.Visit(field).(bool) {
+			return nil
+		}
+	}
+
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitStruct_(ctx *parser.Struct_Context) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitUnion_(ctx *parser.Union_Context) interface{} {
+func (v *FieldTypeFindVisitor) VisitUnion_(ctx *parser.Union_Context) interface{} {
+	for _, field := range ctx.AllField() {
+		if v.Visit(field).(bool) {
+			return nil
+		}
+	}
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitException(ctx *parser.ExceptionContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitException(ctx *parser.ExceptionContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitService(ctx *parser.ServiceContext) interface{} {
-	return v.VisitChildren(ctx)
-}
+func (v *FieldTypeFindVisitor) VisitService(ctx *parser.ServiceContext) interface{} {
+	for _, function := range ctx.AllFunction_() {
+		if v.Visit(function).(bool) {
+			return nil
+		}
+	}
 
-func (v *NodeFindVisitor) VisitField(ctx *parser.FieldContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitField_id(ctx *parser.Field_idContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitField_req(ctx *parser.Field_reqContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitField(ctx *parser.FieldContext) interface{} {
+	v.Visit(ctx.Field_type())
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitFunction_(ctx *parser.Function_Context) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitOneway(ctx *parser.OnewayContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitField_id(ctx *parser.Field_idContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitFunction_type(ctx *parser.Function_typeContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitThrows_list(ctx *parser.Throws_listContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitField_req(ctx *parser.Field_reqContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitType_annotations(ctx *parser.Type_annotationsContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitFunction_(ctx *parser.Function_Context) interface{} {
+	if v.Visit(ctx.Function_type()).(bool) {
+		return nil
+	}
+
+	for _, field := range ctx.AllField() {
+		if v.Visit(field).(bool) {
+			return nil
+		}
+	}
+
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitType_annotation(ctx *parser.Type_annotationContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitOneway(ctx *parser.OnewayContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitAnnotation_value(ctx *parser.Annotation_valueContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitFunction_type(ctx *parser.Function_typeContext) interface{} {
+	v.Visit(ctx.Field_type())
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitField_type(ctx *parser.Field_typeContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitBase_type(ctx *parser.Base_typeContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitThrows_list(ctx *parser.Throws_listContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitContainer_type(ctx *parser.Container_typeContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitMap_type(ctx *parser.Map_typeContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitSet_type(ctx *parser.Set_typeContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitList_type(ctx *parser.List_typeContext) interface{} {
-	return v.VisitChildren(ctx)
-}
-
-func (v *NodeFindVisitor) VisitCpp_type(ctx *parser.Cpp_typeContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitType_annotations(ctx *parser.Type_annotationsContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitConst_value(ctx *parser.Const_valueContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitType_annotation(ctx *parser.Type_annotationContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitInteger(ctx *parser.IntegerContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitAnnotation_value(ctx *parser.Annotation_valueContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitConst_list(ctx *parser.Const_listContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitField_type(ctx *parser.Field_typeContext) interface{} {
+	v.FieldTypeCtx = ctx
+
+	v.Visit(ctx.Container_type())
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitConst_map_entry(ctx *parser.Const_map_entryContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitBase_type(ctx *parser.Base_typeContext) interface{} {
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitConst_map(ctx *parser.Const_mapContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitContainer_type(ctx *parser.Container_typeContext) interface{} {
+	v.Visit(ctx.Map_type())
+	v.Visit(ctx.Set_type())
+	v.Visit(ctx.List_type())
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitList_separator(ctx *parser.List_separatorContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitMap_type(ctx *parser.Map_typeContext) interface{} {
+	v.Visit(ctx.Field_type(0))
+	v.Visit(ctx.Field_type(1))
 	return nil
 }
 
-func (v *NodeFindVisitor) VisitReal_base_type(ctx *parser.Real_base_typeContext) interface{} {
+func (v *FieldTypeFindVisitor) VisitSet_type(ctx *parser.Set_typeContext) interface{} {
+	v.Visit(ctx.Field_type())
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitList_type(ctx *parser.List_typeContext) interface{} {
+	v.Visit(ctx.Field_type())
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitCpp_type(ctx *parser.Cpp_typeContext) interface{} {
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitConst_value(ctx *parser.Const_valueContext) interface{} {
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitInteger(ctx *parser.IntegerContext) interface{} {
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitConst_list(ctx *parser.Const_listContext) interface{} {
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitConst_map_entry(ctx *parser.Const_map_entryContext) interface{} {
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitConst_map(ctx *parser.Const_mapContext) interface{} {
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitList_separator(ctx *parser.List_separatorContext) interface{} {
+	return nil
+}
+
+func (v *FieldTypeFindVisitor) VisitReal_base_type(ctx *parser.Real_base_typeContext) interface{} {
 	return nil
 }
 

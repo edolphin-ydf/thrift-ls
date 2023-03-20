@@ -86,17 +86,17 @@ func (se *Server) Completion(ctx context.Context, params *protocol.CompletionPar
 		return nil, nil
 	}
 
-	findResult := FindNodeByPosition(file, params.Position)
-	if findResult != nil {
-		logger.Sugar().Debug("CompletionFieldType:", findResult.GetText())
+	findResult := findTypeIdentifierAtPosition(file, params.Position, true)
+	if findResult != "" {
+		logger.Sugar().Debug("CompletionFieldType:", findResult)
 	} else {
-		logger.Sugar().Debug("CompletionFieldType", "nil")
+		logger.Sugar().Debug("CompletionFieldType", " empty")
 		return nil, nil
 	}
 
 	return &protocol.CompletionList{
 		IsIncomplete: false,
-		Items:        completion(file, findResult.GetText()),
+		Items:        completion(file, findResult),
 	}, nil
 }
 

@@ -44,7 +44,7 @@ func TestVisitor(t *testing.T) {
 	p.BuildParseTrees = true
 	tree := p.Document()
 
-	visitor := &NodeFindVisitor{
+	visitor := &FieldTypeFindVisitor{
 		BaseThriftVisitor: &parser.BaseThriftVisitor{
 		},
 	}
