@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"go.lsp.dev/protocol"
+	"go.lsp.dev/uri"
 )
 
 type Server struct {
@@ -77,10 +78,9 @@ func (se *Server) ColorPresentation(ctx context.Context, params *protocol.ColorP
 }
 
 func (se *Server) Completion(ctx context.Context, params *protocol.CompletionParams) (result *protocol.CompletionList, err error) {
-	
+
 	se.checkAndParseFile(ctx, WorkspaceInstance.Files[params.TextDocument.URI])
 
-	//logger.Sugar().Debug("CompletionContext", params.Context)
 	file, ok := WorkspaceInstance.Files[params.TextDocument.URI]
 	if !ok {
 		return nil, nil
@@ -88,7 +88,7 @@ func (se *Server) Completion(ctx context.Context, params *protocol.CompletionPar
 
 	findResult := FindNodeByPosition(file, params.Position)
 	if findResult != nil {
-		logger.Sugar().Debug("CompletionFieldType", findResult.GetText())
+		logger.Sugar().Debug("CompletionFieldType:", findResult.GetText())
 	} else {
 		logger.Sugar().Debug("CompletionFieldType", "nil")
 		return nil, nil
@@ -105,33 +105,13 @@ func (se *Server) CompletionResolve(ctx context.Context, params *protocol.Comple
 }
 
 func (se *Server) Declaration(ctx context.Context, params *protocol.DeclarationParams) (result []protocol.Location, err error) {
-	logger.Sugar().Debug("Declaration", params.TextDocument.URI, params.Position)
 	return nil, nil
 }
 
 func (se *Server) Definition(ctx context.Context, params *protocol.DefinitionParams) (result []protocol.Location, err error) {
-	logger.Sugar().Debug("Definition", params.TextDocument.URI, params.Position)
-
 	se.checkAndParseFile(ctx, WorkspaceInstance.Files[params.TextDocument.URI])
 
 	return definition(params.TextDocument.URI, params.Position), nil
-}
-
-func (se *Server) checkAndParseFile(ctx context.Context, file *File) {
-	if file.DocumentVersion >= file.TextVersion {
-		return
-	}
-
-	files := ParseFile(file.URI, file.Text)
-	if len(files) == 0 {
-		return
-	}
-	files[0].DocumentVersion = file.TextVersion
-
-	for _, f := range files {
-		WorkspaceInstance.Files[f.URI] = f
-		f.DocumentVersion = file.TextVersion
-	}
 }
 
 func (se *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) (err error) {
@@ -194,7 +174,6 @@ func (se *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocum
 }
 
 func (se *Server) DidSave(ctx context.Context, params *protocol.DidSaveTextDocumentParams) (err error) {
-	logger.Sugar().Debug("DidSave", params.TextDocument.URI)
 	return nil
 }
 
@@ -215,7 +194,6 @@ func (se *Server) DocumentLinkResolve(ctx context.Context, params *protocol.Docu
 }
 
 func (se *Server) DocumentSymbol(ctx context.Context, params *protocol.DocumentSymbolParams) (result []interface{}, err error) {
-	logger.Sugar().Debug("DocumentSymbol", params.TextDocument.URI)
 	return nil, nil
 }
 
@@ -268,7 +246,6 @@ func (se *Server) Symbols(ctx context.Context, params *protocol.WorkspaceSymbolP
 }
 
 func (se *Server) TypeDefinition(ctx context.Context, params *protocol.TypeDefinitionParams) (result []protocol.Location, err error) {
-	logger.Sugar().Debug("TypeDefinition", params.TextDocument.URI, params.Position)
 	return definition(params.TextDocument.URI, params.Position), nil
 }
 
@@ -297,6 +274,13 @@ func (se *Server) WillRenameFiles(ctx context.Context, params *protocol.RenameFi
 }
 
 func (se *Server) DidRenameFiles(ctx context.Context, params *protocol.RenameFilesParams) (err error) {
+	for _, fr := range params.Files {
+		if file, ok := WorkspaceInstance.Files[uri.URI(fr.OldURI)]; ok {
+			file.URI = uri.URI(fr.NewURI)
+			WorkspaceInstance.Files[uri.URI(fr.NewURI)] = file
+			delete(WorkspaceInstance.Files, uri.URI(fr.OldURI))
+		}
+	}
 	return nil
 }
 
@@ -305,6 +289,9 @@ func (se *Server) WillDeleteFiles(ctx context.Context, params *protocol.DeleteFi
 }
 
 func (se *Server) DidDeleteFiles(ctx context.Context, params *protocol.DeleteFilesParams) (err error) {
+	for _, fr := range params.Files {
+		delete(WorkspaceInstance.Files, uri.URI(fr.URI))
+	}
 	return nil
 }
 
@@ -350,4 +337,21 @@ func (se *Server) Moniker(ctx context.Context, params *protocol.MonikerParams) (
 
 func (se *Server) Request(ctx context.Context, method string, params interface{}) (result interface{}, err error) {
 	return nil, nil
+}
+
+func (se *Server) checkAndParseFile(ctx context.Context, file *File) {
+	if file.DocumentVersion >= file.TextVersion {
+		return
+	}
+
+	files := ParseFile(file.URI, file.Text)
+	if len(files) == 0 {
+		return
+	}
+	files[0].DocumentVersion = file.TextVersion
+
+	for _, f := range files {
+		WorkspaceInstance.Files[f.URI] = f
+		f.DocumentVersion = file.TextVersion
+	}
 }
