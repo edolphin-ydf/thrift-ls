@@ -25,6 +25,12 @@ func (se *Server) Initialize(ctx context.Context, params *protocol.InitializePar
 				ResolveProvider:   true,
 				TriggerCharacters: []string{"."},
 			},
+			DocumentSymbolProvider: &protocol.DocumentSymbolOptions{
+				WorkDoneProgressOptions: protocol.WorkDoneProgressOptions{
+					WorkDoneProgress: false,
+				},
+				Label: "",
+			},
 		},
 		ServerInfo: &protocol.ServerInfo{
 			Name:    "thrift-ls",
@@ -194,7 +200,12 @@ func (se *Server) DocumentLinkResolve(ctx context.Context, params *protocol.Docu
 }
 
 func (se *Server) DocumentSymbol(ctx context.Context, params *protocol.DocumentSymbolParams) (result []interface{}, err error) {
-	return nil, nil
+	file, ok := WorkspaceInstance.Files[params.TextDocument.URI]
+	if !ok {
+		return nil, nil
+	}
+
+	return fileToSybolInformations(file), nil
 }
 
 func (se *Server) ExecuteCommand(ctx context.Context, params *protocol.ExecuteCommandParams) (result interface{}, err error) {
